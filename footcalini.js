@@ -1,9 +1,9 @@
-module.exports.clubID = '@clubid@';
-module.exports.clubName = '@clubname@';
-module.exports.clubBaseNr = '@clubbasenr@';
+module.exports.clubID = 'CIstring';
+module.exports.clubName = 'CNstring';
+module.exports.clubBaseNr = 'CBNstring';
 module.exports.apisec = false;
-module.exports.dbname = '@dbname@';
-module.exports.apachedir = '@serverdir@';
-module.exports.apiport = @apiport@;
+module.exports.dbname = 'DNstring';
+module.exports.apachedir = 'SDstring';
+module.exports.apiport = APIstring;
 module.exports.serveraddress = "185.224.89.139";
 
