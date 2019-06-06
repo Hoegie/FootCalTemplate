@@ -83,6 +83,7 @@ var apnProvider = new apn.Provider({
 
 app.all("/*", function(req, res, next){
   console.log("all gehit !!");
+  console.log(req.url);
   var sourceAddress = req.connection.remoteAddress.toString();
 
   console.log(sourceAddress);
@@ -1754,14 +1755,20 @@ app.post("/apn/new",function(req,res){
         device_language: req.body.language
     };
     console.log(post);
-connection.query('INSERT INTO tokens SET ?', post, function(err,result) {
-/*connection.end();*/
-  if (!err){
-    console.log(result);
-    res.end(JSON.stringify(result.insertId));
-  }else{
-    console.log('Error while performing Query.');
-  }
+  connection.query('DELETE FROM tokens WHERE device_name = ? AND device_ID = ?', [req.body.devicename,req.body.deviceID], function(err,result) {
+    if (!err){
+      console.log(result);
+      connection.query('INSERT INTO tokens SET ?', post, function(err,result) {
+        if (!err){
+          console.log(result);
+          res.end(JSON.stringify(result.insertId));
+        }else{
+          console.log('Error while performing Query1.');
+        }
+      });
+    }else{
+      console.log('Error while performing Query1.');
+    }
   });
 });
 
@@ -2141,6 +2148,17 @@ connection.query('SELECT COUNT(*) as number from accounts', function(err, rows, 
   });
 });
 
+app.get("/accounts/forcedlogout/:accountid",function(req,res){
+connection.query('SELECT forced_logout from accounts WHERE account_ID = ?', req.params.accountid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
 
 app.post("/accounts/new",function(req,res){
   var post = {
@@ -2214,7 +2232,7 @@ connection.query('UPDATE accounts SET logged_in = 1 WHERE account_ID = ?',req.pa
 });
 
 app.put("/accounts/logout/:id",function(req,res){
-connection.query('UPDATE accounts SET logged_in = 0 WHERE account_ID = ?',req.params.id, function(err,result) {
+connection.query('UPDATE accounts SET logged_in = 0, forced_logout = 0 WHERE account_ID = ?',req.params.id, function(err,result) {
 /*connection.end();*/
   if (!err){
     console.log(result);
@@ -2813,7 +2831,7 @@ connection.query('SELECT players.*, COALESCE(teams.team_name, "Geen Team") as te
 
 
 app.get("/players/php/all",function(req,res){
-connection.query('SELECT players.player_ID, players.first_name, players.last_name, players.street, players.street_nr, players.postal_code, players.town, COALESCE(teams.team_name, "Geen Team") as teamName FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY LPAD(lower(teamName), 10,0) ASC, players.last_name ASC', function(err, rows, fields) {
+connection.query('SELECT players.player_ID, players.first_name, players.last_name, players.street, players.street_nr, players.postal_code, players.town, COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Team" ELSE "Gedeactiveerd" END) as teamName FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY LPAD(lower(teamName), 10,0) ASC, players.last_name ASC', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -2827,7 +2845,7 @@ connection.query('SELECT players.player_ID, players.first_name, players.last_nam
 app.get("/players/php/limit/:offset/:limit",function(req,res){
   console.log(req.params.offset);
   console.log(req.params.limit);
-connection.query('SELECT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, "Geen Ploeg") as Ploeg FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY LPAD(lower(Ploeg), 10,0) ASC, players.last_name ASC LIMIT ?, ?',[parseInt(req.params.offset), parseInt(req.params.limit)], function(err, rows, fields) {
+connection.query('SELECT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Ploeg" ELSE "Niet Actief" END) as Ploeg FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY LPAD(lower(Ploeg), 10,CASE WHEN teamID = -1 THEN 2 ELSE 1 END) ASC, players.last_name ASC LIMIT ?, ?',[parseInt(req.params.offset), parseInt(req.params.limit)], function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -3089,6 +3107,42 @@ connection.query('UPDATE players SET ? WHERE player_ID = ?', [put, req.params.pl
   });
 });
 
+app.put("/players/deactivate",function(req,res){
+  connection.query('UPDATE players SET teamID = -1 WHERE player_ID = ?', req.body.playerid, function(err,result) {
+    if (!err){
+      console.log(result);
+      connection.query('SELECT accountID FROM linkedPlayers WHERE playerID = ?', req.body.playerid, function(err, rows, fields) {
+        if (!err){
+          console.log(rows);
+          rows.forEach(function(row,i){
+              connection.query('UPDATE accounts SET userroleID = 1, forced_logout = 1 WHERE account_ID = ?', row.accountID, function(err,result) {
+                if (!err){
+                  console.log(result);
+                  
+                }else{
+                  console.log('Error while performing 3th Query.');
+                }
+              });
+          });
+          connection.query('DELETE FROM linkedPlayers WHERE playerID = ?', req.body.playerid, function(err,result) {
+            if (!err){
+              console.log(result);
+              res.end(JSON.stringify(result));
+            }else{
+              console.log('Error while performing 4th Query.');
+            }
+          });
+
+        }else{
+          console.log('Error while performing 2nd Query.');
+        }
+      });
+
+    }else{
+      console.log('Error while performing 1st Query.');
+    }
+  });
+});
 
 app.delete("/players/:playerid",function(req,res){
   var data = {
