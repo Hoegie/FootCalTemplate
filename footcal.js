@@ -1057,7 +1057,7 @@ var put = {
       pw_recovered: 1
 };
 var mailOptions = {
-  from: 'noreply@footcal',
+  from: 'noreply@footcal.be',
   to: toaddress,
   subject: 'FootCal password reset',
   text: 'Hello, \n\n Your password has been reset to : ' + newpassword + '\n\n\n Kind regards, \n FootCal'
@@ -1092,7 +1092,7 @@ var put = {
 };
 console.log(body);
 var mailOptions = {
-  from: 'noreply@footcal',
+  from: 'noreply@footcal.be',
   to: toaddress,
   subject: subject,
   text: body
