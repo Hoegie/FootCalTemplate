@@ -1,4 +1,4 @@
-//LIVE VERSION 5,4 incl teams special login
+//LIVE VERSION 6 go live version  
 var express    = require('express');
 var mysql      = require('mysql');
 var bodyParser = require('body-parser');
@@ -2368,6 +2368,102 @@ connection.query('UPDATE userroles SET ? WHERE userrole_ID = ?', [put, req.param
   });
 });
 
+
+/*USER ROLES PRIVELEGES*/
+
+app.get("/userroleprivs/all",function(req,res){
+connection.query('SELECT * FROM userrole_privs', function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.get("/userroleprivs/:rightslevel",function(req,res){
+connection.query('SELECT SD1, PR1, GO1, CM1, T1, P1, OP1, CD1, TD1, PD1, OD1, CCI1, DCI1, MED1, GR1, MGO1, LM1, DR1, RE1, I1, EA1, LC1, GR2, CCM1, CT1, CP1, CO1 FROM userrole_privs WHERE rights_level = ?',req.params.rightslevel, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.get("/userroleprivsparents",function(req,res){
+connection.query('SELECT SD1, PR1, GO1, CM1, T1, P1, OP1, CD1, TD1, PD1, OD1, CCI1, DCI1, MED1, GR1, MGO1, LM1, DR1, RE1, I1, EA1, LC1, GR2, CCM1, CT1, CP1, CO1 FROM userrole_privs WHERE rights_level = 1 OR rights_level = 2 OR rights_level = 3', function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+
+
+app.put("/userroleprivs/edit/:userroleprivid",function(req,res){
+  var put = {
+        SD1: req.body.sd1,
+        PR1: req.body.pr1,
+        GO1: req.body.go1,
+        CM1: req.body.cm1,
+        T1: req.body.t1,
+        P1: req.body.p1,
+        OP1: req.body.op1,
+        CD1: req.body.cd1,
+        TD1: req.body.td1,
+        PD1: req.body.pd1,
+        OD1: req.body.od1,
+        CCI1: req.body.cci1,
+        MED1: req.body.med1,
+        GR1: req.body.gr1,
+        MGO1: req.body.td1,
+        LM1: req.body.lm1,
+        DR1: req.body.dr1,
+        RE1: req.body.re1,
+        I1: req.body.i1,
+        EA1: req.body.ea1,
+        LC1: req.body.lc1,
+        GR2: req.body.gr2,
+        CCM1: req.body.ccm1,
+        CT1: req.body.ct1,
+        CP1: req.body.cp1,
+        CO1: req.body.co1,
+        MTS1: req.body.mts1
+    };
+    console.log(put);
+connection.query('UPDATE userrole_privs SET ? where userrole_priv_ID = ?', [put, req.params.userroleprivid], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.put("/userroleprivs/update/:rightslevel",function(req,res){
+  console.log(req.body);
+connection.query('UPDATE userrole_privs SET ? where rights_level = ?', [req.body, req.params.rightslevel], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
 /*TEAMS*/
 
 app.get("/teams/all",function(req,res){
@@ -2461,6 +2557,18 @@ connection.query(connquery, req.params.favorites, function(err, rows, fields) {
 
 app.get("/teams/count",function(req,res){
 connection.query('SELECT COUNT(*) as number from teams', function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.get("/teams/reverseteamid/:teamid",function(req,res){
+connection.query('SELECT team_ID, team_name FROM teams WHERE team_ID <> ? AND EXISTS (SELECT 1 FROM players WHERE players.teamID = teams.team_ID) ORDER BY LPAD(lower(team_name), 10,0) ASC', req.params.teamid, function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -2769,6 +2877,42 @@ connection.query('SELECT players.*, COALESCE(teams.team_name, "Geen Team") as te
 
 app.get("/checklinkedadmin/:accountid/:playerid",function(req,res){
 connection.query('SELECT admin FROM linkedPlayers WHERE linkedPlayers.accountID = ? && linkedPlayers.playerID = ?', [req.params.accountid,req.params.playerid], function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.get("/linkedplayers/teamid/extraright/:accountid",function(req,res){
+connection.query('SELECT DISTINCT players.teamID, MAX(linkedPlayers.admin) + 1 as extraright FROM linkedPlayers LEFT JOIN players ON linkedPlayers.playerID = players.player_ID WHERE linkedPlayers.accountID = ? GROUP BY players.teamID', req.params.accountid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.get("/linkedplayers/playerid/extraright/:accountid",function(req,res){
+connection.query('SELECT linkedPlayers.playerID, linkedPlayers.admin + 1 as extraright FROM linkedPlayers WHERE linkedPlayers.accountID = ?', req.params.accountid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.get("/linkedplayers/maxright/:accountid",function(req,res){
+connection.query('SELECT COALESCE(MAX(Admin) + 1, 0) as maxadmin FROM linkedPlayers WHERE accountID = ?', req.params.accountid, function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -3287,10 +3431,24 @@ connection.query('SELECT players.player_ID FROM players WHERE teamID = ?', teamI
 
 
 app.post("/playersemail/new",function(req,res){
+  var owner;
+  owner = req.body.owner;
+  if (req.body.owner == "Speler" || req.body.owner == "Joueur"){
+      owner = "Player";
+  }
+  if (req.body.owner == "Moeder" || req.body.owner == "Mère"){
+      owner = "Mother";
+  }
+  if (req.body.owner == "Vader" || req.body.owner == "Père"){
+      owner = "Father";
+  }
+  if (req.body.owner == "Andere" || req.body.owner == "Autre"){
+      owner = "Other";
+  }
   var post = {
         playerID: req.body.playerid,
         email_address: req.body.emailaddress,
-        owner: req.body.owner
+        owner: owner
     };
     console.log(post);
 connection.query('INSERT INTO players_emails SET ?', post, function(err,result) {
@@ -3377,10 +3535,24 @@ connection.query('SELECT * FROM players_gsms where gsm_ID = ?', req.params.gsmid
 });
 
 app.post("/playersgsm/new",function(req,res){
+  var owner;
+  owner = req.body.owner;
+  if (req.body.owner == "Speler" || req.body.owner == "Joueur"){
+      owner = "Player";
+  }
+  if (req.body.owner == "Moeder" || req.body.owner == "Mère"){
+      owner = "Mother";
+  }
+  if (req.body.owner == "Vader" || req.body.owner == "Père"){
+      owner = "Father";
+  }
+  if (req.body.owner == "Andere" || req.body.owner == "Autre"){
+      owner = "Other";
+  }
   var post = {
         playerID: req.body.playerid,
         gsm_number: req.body.gsmnumber,
-        owner: req.body.owner
+        owner: owner
     };
     console.log(post);
 connection.query('INSERT INTO players_gsms SET ?', post, function(err,result) {
