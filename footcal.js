@@ -2651,6 +2651,32 @@ connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid
   });
 });
 
+app.put("/teams/phpedit/:teamid",function(req,res){
+  var put = {
+        T1_ID: req.body.T1ID,
+        T2_ID: req.body.T2ID,
+        D1_ID: req.body.D1ID,
+        D2_ID: req.body.D2ID,
+        Co_ID: req.body.CoID,
+        team_name: req.body.teamname,
+        team_division: req.body.teamdivision,
+        team_series: req.body.teamseries,
+        assists: req.body.assists,
+        trainingmod_allowed: req.body.trainingmod
+    };
+    console.log(put);
+connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+
 app.put("/teams/removestaff/:staffid",function(req,res){
 connection.query('UPDATE teams SET T1_ID = IF(T1_ID = ?, 0, T1_ID), T2_ID = IF(T2_ID = ?, 0, T2_ID), D1_ID = IF(D1_ID = ?, 0, D1_ID), D2_ID = IF(D2_ID = ?, 0, D2_ID), Co_ID = IF(Co_ID = ?, 0, Co_ID)', [req.params.staffid, req.params.staffid, req.params.staffid, req.params.staffid, req.params.staffid], function(err,result) {
 /*connection.end();*/
