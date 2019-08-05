@@ -526,6 +526,8 @@ console.log(teamID);
       rows.forEach(function(row, i) {
         if (clubID != row.active_clubID){
             title = "club_annulation";
+          } else {
+            title = "annulation";
           }
         var locTitle = androidtranslator[row.device_language][title];
         locTitle = locTitle.replace("%1", "[" + clubName.toLowerCase() + "]");
@@ -2491,7 +2493,7 @@ connection.query('UPDATE userrole_privs SET ? where rights_level = ?', [req.body
 /*TEAMS*/
 
 app.get("/teams/all",function(req,res){
-connection.query('SELECT team_ID, team_name, team_series, team_division, assists, trainingmod_allowed FROM teams ORDER BY LPAD(lower(team_name), 10,0) ASC', function(err, rows, fields) {
+connection.query('SELECT team_ID, team_name, team_series, team_division, assists, trainingmod_allowed FROM teams ORDER BY team_order ASC', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -2503,9 +2505,8 @@ connection.query('SELECT team_ID, team_name, team_series, team_division, assists
 });
 
 
-
 app.get("/teams/php/all",function(req,res){
-connection.query('SELECT team_ID, team_name as Ploeg, team_series as Reeks, team_division as Afdeling FROM teams ORDER BY LPAD(lower(Ploeg), 10,0) ASC', function(err, rows, fields) {
+connection.query('SELECT team_ID, team_name as Ploeg, team_series as Reeks, team_division as Afdeling, team_order as Volgorde FROM teams ORDER BY team_order ASC', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -2566,7 +2567,7 @@ connection.query('SELECT assists, trainingmod_allowed, teampic_url FROM teams WH
 
 app.get("/teams/favorites/:favorites",function(req,res){
   console.log(req.params.favorites);
-  var connquery = "SELECT team_name, team_ID, teampic_url FROM teams WHERE team_ID IN " + req.params.favorites + " ORDER BY LPAD(lower(team_name), 10,0) ASC" ;
+  var connquery = "SELECT team_name, team_ID, teampic_url FROM teams WHERE team_ID IN " + req.params.favorites + " ORDER BY team_order ASC" ;
   console.log(connquery);
 connection.query(connquery, req.params.favorites, function(err, rows, fields) {
 /*connection.end();*/
@@ -2676,7 +2677,6 @@ connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid
   });
 });
 
-
 app.put("/teams/removestaff/:staffid",function(req,res){
 connection.query('UPDATE teams SET T1_ID = IF(T1_ID = ?, 0, T1_ID), T2_ID = IF(T2_ID = ?, 0, T2_ID), D1_ID = IF(D1_ID = ?, 0, D1_ID), D2_ID = IF(D2_ID = ?, 0, D2_ID), Co_ID = IF(Co_ID = ?, 0, Co_ID)', [req.params.staffid, req.params.staffid, req.params.staffid, req.params.staffid, req.params.staffid], function(err,result) {
 /*connection.end();*/
@@ -2717,6 +2717,20 @@ connection.query('UPDATE teams SET ? WHERE team_ID = ?', [put, req.params.teamid
   });
 });
 
+app.put("/teams/teamorder/:teamid",function(req,res){
+var put = {
+    team_order: req.body.teamorder
+};
+connection.query('UPDATE teams SET ? WHERE team_ID = ?', [put, req.params.teamid], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
 
 app.delete("/teams/:teamid",function(req,res){
   var data = {
@@ -5751,11 +5765,12 @@ app.get("/dashboard/teamscorers/:eventtype/:teamname",function(req,res){
 if (req.params.eventtype == 'All'){
   req.params.eventtype = '%';
 }
+console.log(req.params.teamname);
 connection.query("SELECT teams.team_ID FROM teams WHERE teams.team_name = ?", req.params.teamname,function(err, rows, fields) {
   if (!err){
     var teamID = rows[0].team_ID;
-
-    connection.query("SELECT CONCAT(players.first_name, ' ', players.last_name) as fullname, (SELECT COUNT(goals_new.goals_ID) as goals FROM goals_new JOIN events ON events.event_ID = goals_new.eventID WHERE events.event_type LIKE ? AND goals_new.teamID = ? AND goals_new.playerID > 2 AND goals_new.playerID = players.player_ID) as scoredgoals, (SELECT COUNT(goals_new.goals_ID) as goals FROM goals_new JOIN events ON events.event_ID = goals_new.eventID WHERE events.event_type LIKE ? AND goals_new.teamID = ? AND goals_new.playerID > 2 AND goals_new.assistID = players.player_ID) as assists FROM players WHERE players.player_ID > 2 GROUP BY players.last_name ORDER BY scoredgoals DESC", [req.params.eventtype,teamID,req.params.eventtype,teamID], function(err, rows, fields) {
+    console.log(teamID);
+    connection.query("SELECT CONCAT(players.first_name, ' ', players.last_name) as fullname, (SELECT COUNT(goals_new.goals_ID) as goals FROM goals_new JOIN events ON events.event_ID = goals_new.eventID WHERE events.event_type LIKE ? AND goals_new.teamID = ? AND goals_new.playerID > 2 AND goals_new.playerID = players.player_ID) as scoredgoals, (SELECT COUNT(goals_new.goals_ID) as goals FROM goals_new JOIN events ON events.event_ID = goals_new.eventID WHERE events.event_type LIKE ? AND goals_new.teamID = ? AND goals_new.playerID > 2 AND goals_new.assistID = players.player_ID) as assists FROM players WHERE players.player_ID > 2 AND EXISTS (SELECT 1 FROM event_presences LEFT jOIN events ON event_presences.eventID = events.event_ID WHERE events.teamID = ? AND event_presences.confirmed = 1 AND event_presences.playerID = players.player_ID) GROUP BY players.last_name ORDER BY scoredgoals DESC", [req.params.eventtype,teamID,req.params.eventtype,teamID,teamID], function(err, rows, fields) {
     /*connection.end();*/
       if (!err){
         console.log('The solution is: ', rows);
