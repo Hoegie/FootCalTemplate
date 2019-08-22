@@ -1,4 +1,4 @@
-//LIVE VERSION 6 go live version  
+//LIVE VERSION 7 (dayoverview) go live version  
 var express    = require('express');
 var mysql      = require('mysql');
 var bodyParser = require('body-parser');
@@ -3053,7 +3053,7 @@ connection.query('SELECT players.player_ID, players.first_name, players.last_nam
 app.get("/players/php/limit/:offset/:limit",function(req,res){
   console.log(req.params.offset);
   console.log(req.params.limit);
-connection.query('SELECT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Ploeg" ELSE "Niet Actief" END) as Ploeg FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY LPAD(lower(Ploeg), 10,CASE WHEN teamID = -1 THEN 2 ELSE 1 END) ASC, players.last_name ASC LIMIT ?, ?',[parseInt(req.params.offset), parseInt(req.params.limit)], function(err, rows, fields) {
+connection.query('SELECT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Ploeg" ELSE "Niet Actief" END) as Ploeg FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY teams.team_order ASC, players.last_name ASC LIMIT ?, ?',[parseInt(req.params.offset), parseInt(req.params.limit)], function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -3796,6 +3796,21 @@ connection.query(connquery, function(err, rows, fields) {
   });
 });
 
+app.get("/events/dayevents/:weekday/:language",function(req,res){
+var weekDay = req.params.weekday;
+var language = req.params.language;
+console.log(weekDay);
+var connquery = "SELECT events.event_ID, club_event_types.event_type, club_event_types.club_event_name_" + language + " as club_event_name, events.match_type, events.teamID, teams.team_name, events.locationID, events.homelocationID, CONVERT(DATE_FORMAT(events.date,'%d-%m-%Y'), CHAR(50)) as event_date, CONVERT(DATE_FORMAT(events.date,'%H:%i'), CHAR(50)) as event_time, COALESCE(results.homegoals, 1000) as homegoals, COALESCE(results.awaygoals, 1000) as awaygoals, CONVERT(COALESCE(results.result_ID, 'none'), CHAR(50)) as resultID, CONVERT(COALESCE(opponentteam.prefix, 'none'), CHAR(50)) as opponent_prefix, CONVERT(COALESCE(opponentteam.name, 'none'), CHAR(50)) as opponent_name, CONVERT(COALESCE(concat(opponentplace.prefix, ' ', opponentplace.name), homelocations.name), CHAR(50)) as event_location, events.comments, events.dressing_room, events.referee, events.annulation FROM events LEFT JOIN club_event_types ON events.event_type = club_event_types.club_event_type_ID LEFT JOIN teams ON events.teamID = teams.team_ID LEFT JOIN results ON events.event_ID = results.eventID LEFT JOIN opponents AS opponentteam ON events.opponentID = opponentteam.opponent_ID LEFT JOIN opponents AS opponentplace ON events.locationID = opponentplace.opponent_ID LEFT JOIN homelocations ON events.homelocationID = homelocations.homelocation_ID WHERE DATE(date) = '" + weekDay + "' AND events.annulation <> '1' ORDER BY events.date ASC, teams.team_order ASC";
+connection.query(connquery, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
 
 app.get("/events/extraplayers/:eventid",function(req,res){
   connection.query('SELECT extra_players FROM events WHERE event_ID = ?', req.params.eventid, function(err, rows, fields) {
