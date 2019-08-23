@@ -3026,7 +3026,7 @@ connection.query('DELETE FROM linkedPlayers WHERE playerID = ? AND accountID = ?
 /*PLAYERS*/
 
 app.get("/players/all",function(req,res){
-connection.query('SELECT players.*, COALESCE(teams.team_name, "Geen Team") as teamName FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY LPAD(lower(teamName), 10,0) ASC, players.last_name ASC', function(err, rows, fields) {
+connection.query('SELECT players.*, COALESCE(teams.team_name, "Geen Team") as teamName FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID > 2 ORDER BY teams.team_order ASC, players.last_name ASC', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -3076,6 +3076,17 @@ connection.query('SELECT players.first_name, players.last_name, CONVERT(DATE_FOR
   });
 });
 
+app.get("/players/php/fullname/:fullname",function(req,res){
+connection.query('SELECT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Ploeg" ELSE "Niet Actief" END) as Ploeg FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE CONCAT(players.first_name, " ", players.last_name) LIKE ?', req.params.fullname, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
 
 app.get("/players/playerid/:playerid",function(req,res){
 connection.query('SELECT players.*, CONVERT(DATE_FORMAT(players.birth_date,"%d-%m-%Y"), CHAR(50)) as birth_date_string, CONVERT(DATE_FORMAT(players.membership_date,"%d-%m-%Y"), CHAR(50)) as membership_date_string, COALESCE(teams.team_name, "Geen Team") as team_name FROM players LEFT JOIN teams ON players.teamID = teams.team_ID WHERE players.player_ID = ?', req.params.playerid, function(err, rows, fields) {
@@ -5814,7 +5825,7 @@ connection.query("SELECT teams.team_ID FROM teams WHERE teams.team_name = ?", re
 
 app.get("/dashboard/playersearch/:playerstring",function(req,res){
   var playerstring = '%' + req.params.playerstring + '%';
-connection.query("SELECT CONCAT(players.first_name, ' ', players.last_name) as fullname FROM players WHERE players.player_ID > 2 AND (players.first_name LIKE ? OR players.last_name LIKE ?)", [playerstring, playerstring], function(err, rows, fields) {
+connection.query("SELECT CONCAT(players.first_name, ' ', players.last_name) as fullname, player_ID FROM players WHERE players.player_ID > 2 AND (players.first_name LIKE ? OR players.last_name LIKE ?)", [playerstring, playerstring], function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
