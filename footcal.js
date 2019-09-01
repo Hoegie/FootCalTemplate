@@ -3171,7 +3171,7 @@ connection.query('SELECT confirmed_players FROM events where event_ID = ?', req.
 //this will replace the previous api route
 app.get("/confirmedplayergoalsnew/eventid/:eventid",function(req,res){
   console.log('confirmedplayergoalsnew hit !!');
-var connquery = "SELECT players.player_ID, players.first_name, players.last_name, players.pic_url, COALESCE((SELECT COUNT(*) from goals_new WHERE goals_new.playerid = players.player_ID AND goals_new.eventID = " + req.params.eventid + "), 0) as goals FROM players LEFT JOIN event_presences ON players.player_ID = event_presences.playerID WHERE (event_presences.eventID = " + req.params.eventid + " AND event_presences.confirmed = 1) OR players.player_ID = 2 GROUP BY players.last_name ORDER BY CASE WHEN players.player_ID = 2 THEN 1 ELSE 0 END, players.last_name";
+var connquery = "SELECT players.player_ID, players.first_name, players.last_name, players.pic_url, COALESCE((SELECT COUNT(*) from goals_new WHERE goals_new.playerid = players.player_ID AND goals_new.eventID = " + req.params.eventid + "), 0) as goals FROM players LEFT JOIN event_presences ON players.player_ID = event_presences.playerID WHERE (event_presences.eventID = " + req.params.eventid + " AND event_presences.confirmed = 1) OR players.player_ID = 2 GROUP BY CONCAT(players.last_name, ' ', players.first_name) ORDER BY CASE WHEN players.player_ID = 2 THEN 1 ELSE 0 END, players.last_name";
 connection.query(connquery, function(err, rows, fields) {
   if (!err){
     console.log('The solution is: ', rows);
@@ -4834,7 +4834,7 @@ connection.query('SELECT players.player_ID, players.first_name, players.last_nam
 //this will replace the previous api route
 app.get("/confirmedplayergoalsnew/tournamenteventid/:teventid",function(req,res){
 
-connection.query('SELECT players.player_ID, players.first_name, players.last_name, players.pic_url, COALESCE((SELECT COUNT(*) from tournamentgoals_new WHERE tournamentgoals_new.playerid = players.player_ID AND tournamentgoals_new.tournamenteventID = ?), 0) as tournamentgoals FROM players LEFT JOIN tournamentevent_presences ON players.player_ID = tournamentevent_presences.playerID WHERE (tournamentevent_presences.tournamenteventID = ? AND tournamentevent_presences.confirmed = 1) OR players.player_ID = 2 GROUP BY players.last_name ORDER BY CASE WHEN players.player_ID = 2 THEN 1 ELSE 0 END, players.last_name', [req.params.teventid,req.params.teventid], function(err, rows, fields) {
+connection.query("SELECT players.player_ID, players.first_name, players.last_name, players.pic_url, COALESCE((SELECT COUNT(*) from tournamentgoals_new WHERE tournamentgoals_new.playerid = players.player_ID AND tournamentgoals_new.tournamenteventID = ?), 0) as tournamentgoals FROM players LEFT JOIN tournamentevent_presences ON players.player_ID = tournamentevent_presences.playerID WHERE (tournamentevent_presences.tournamenteventID = ? AND tournamentevent_presences.confirmed = 1) OR players.player_ID = 2 GROUP BY CONCAT(players.last_name, ' ', players.first_name) ORDER BY CASE WHEN players.player_ID = 2 THEN 1 ELSE 0 END, players.last_name", [req.params.teventid,req.params.teventid], function(err, rows, fields) {
   if (!err){
     console.log('The solution is: ', rows);
     res.end(JSON.stringify(rows));
