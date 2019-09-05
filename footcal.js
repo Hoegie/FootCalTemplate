@@ -321,6 +321,7 @@ app.post("/footcal/iospushdatemove",function(req,res){
  });
 });
 
+
 app.post("/footcal/iosselectionpush",function(req,res){
   var playerID = req.body.playerid;
   var body = req.body.body;
@@ -356,6 +357,54 @@ app.post("/footcal/iosselectionpush",function(req,res){
     }
  });
 });
+
+/*
+app.post("/footcal/iosselectionpush",function(req,res){
+  var playerID = req.body.playerid;
+  var body = req.body.body;
+  var title = req.body.title;
+  var playerName = req.body.playername;
+  var teamName = req.body.teamname;
+  var eventID = req.body.eventid;
+  var date = req.body.date;
+  
+  var connquery = "SELECT tokens.accountID, tokens.token, tokens.device_language, tokens.active_clubID FROM tokens LEFT JOIN accounts ON tokens.accountID = accounts.account_ID WHERE accounts.favorites REGEXP '[[:<:]]" + teamID + "[[:>:]]' AND tokens.send = 1 AND tokens.send_anul = 1 AND tokens.device_type = 'Apple'";
+  connection.query(connquery, function(err, rows, fields) {
+    if (!err){
+      res.end(JSON.stringify(rows));
+      console.log(rows)
+      rows.forEach(function(row, i) {
+
+          var notification6 = new apn.Notification();
+          notification6.topic = 'be.degronckel.FootCal';
+          notification6.expiry = Math.floor(Date.now() / 1000) + 3600;
+          notification6.sound = 'ping.aiff';
+          notification6.titleLocKey = title;
+          notification6.locKey = body;
+          if (clubID != row.active_clubID){
+            notification6.subtitle = "[" + clubName + "]";
+          }
+
+          var connquery2 = "SELECT club_event_types.club_event_name_" + row.device_language + " as club_event_name FROM events LEFT JOIN club_event_types ON club_event_types.club_event_type_ID = events.event_type WHERE events.event_ID = " + eventID;
+          connection.query(connquery2, function(err, rows2, fields){
+            if (!err){
+                
+                notification6.locArgs = [playerName, teamName, rows2[0].club_event_name, date];
+
+                apnProvider.send(notification6, row.token).then(function(result) { 
+                  console.log(result);
+                });
+            } else {
+              console.log('Error while performing Query.');
+            }
+          });     
+      });
+    }else{
+      console.log('Error while performing Query.');
+    }
+ });
+});
+*/
 
 app.post("/footcal/iosselectiontrainingpush",function(req,res){
   var playerID = req.body.playerid;
@@ -791,7 +840,7 @@ console.log(testarraystring);
   
   connection.query("SELECT tokens.accountID, tokens.token, tokens.active_clubID FROM tokens LEFT JOIN linkedPlayers ON tokens.accountID = linkedPlayers.accountID WHERE linkedPlayers.playerID = ? AND tokens.send = 1 AND tokens.device_type = 'Android'", req.body.playerid, function(err, rows, fields) {
     if (!err){
-      //res.end(JSON.stringify(rows));
+      res.end(JSON.stringify(rows));
       console.log(rows)
       rows.forEach(function(row, i) {
 
@@ -819,11 +868,11 @@ console.log(testarraystring);
         admin.messaging().sendToDevice(row.token, payload, options)
           .then(function(response) {
             console.log("Successfully sent message:", response);
-            res.end(JSON.stringify(response));
+            //res.end(JSON.stringify(response));
           })
           .catch(function(error) {
             console.log("Error sending message:", error);
-            res.end(JSON.stringify(error));
+            //res.end(JSON.stringify(error));
         });
 
       });
@@ -833,51 +882,6 @@ console.log(testarraystring);
  });
 });
 
-app.post("/footcal/iosselectionpush",function(req,res){
-  var playerID = req.body.playerid;
-  var body = req.body.body;
-  var title = req.body.title;
-  var playerName = req.body.playername;
-  var teamName = req.body.teamname;
-  var eventID = req.body.eventid;
-  var date = req.body.date;
-  
-  var connquery = "SELECT tokens.accountID, tokens.token, tokens.device_language, tokens.active_clubID FROM tokens LEFT JOIN accounts ON tokens.accountID = accounts.account_ID WHERE accounts.favorites REGEXP '[[:<:]]" + teamID + "[[:>:]]' AND tokens.send = 1 AND tokens.send_anul = 1 AND tokens.device_type = 'Apple'";
-  connection.query(connquery, function(err, rows, fields) {
-    if (!err){
-      res.end(JSON.stringify(rows));
-      console.log(rows)
-      rows.forEach(function(row, i) {
-
-          var notification6 = new apn.Notification();
-          notification6.topic = 'be.degronckel.FootCal';
-          notification6.expiry = Math.floor(Date.now() / 1000) + 3600;
-          notification6.sound = 'ping.aiff';
-          notification6.titleLocKey = title;
-          notification6.locKey = body;
-          if (clubID != row.active_clubID){
-            notification6.subtitle = "[" + clubName + "]";
-          }
-
-          var connquery2 = "SELECT club_event_types.club_event_name_" + row.device_language + " as club_event_name FROM events LEFT JOIN club_event_types ON club_event_types.club_event_type_ID = events.event_type WHERE events.event_ID = " + eventID;
-          connection.query(connquery2, function(err, rows2, fields){
-            if (!err){
-                
-                notification6.locArgs = [playerName, teamName, rows2[0].club_event_name, date];
-
-                apnProvider.send(notification6, row.token).then(function(result) { 
-                  console.log(result);
-                });
-            } else {
-              console.log('Error while performing Query.');
-            }
-          });     
-      });
-    }else{
-      console.log('Error while performing Query.');
-    }
- });
-});
 
 app.post("/footcal/androidselectiontrainingpush",function(req,res){
 var playerID = req.body.playerid;
@@ -3170,12 +3174,10 @@ connection.query('SELECT confirmed_players FROM events where event_ID = ?', req.
 
 //this will replace the previous api route
 app.get("/confirmedplayergoalsnew/eventid/:eventid",function(req,res){
-  console.log('confirmedplayergoalsnew hit !!');
 var connquery = "SELECT players.player_ID, players.first_name, players.last_name, players.pic_url, COALESCE((SELECT COUNT(*) from goals_new WHERE goals_new.playerid = players.player_ID AND goals_new.eventID = " + req.params.eventid + "), 0) as goals FROM players LEFT JOIN event_presences ON players.player_ID = event_presences.playerID WHERE (event_presences.eventID = " + req.params.eventid + " AND event_presences.confirmed = 1) OR players.player_ID = 2 GROUP BY CONCAT(players.last_name, ' ', players.first_name) ORDER BY CASE WHEN players.player_ID = 2 THEN 1 ELSE 0 END, players.last_name";
 connection.query(connquery, function(err, rows, fields) {
   if (!err){
     console.log('The solution is: ', rows);
-    console.log(rows.length);
     if (rows.length < 2){
       var emptyArray = [];
       res.end(JSON.stringify(emptyArray));
@@ -4217,6 +4219,38 @@ connection.query('DELETE FROM event_presences WHERE eventID = ? AND playerID = ?
   });
 });
 
+app.post("/eventpresences/new2",function(req,res){
+  var post = {
+        eventID: req.body.eventid,
+        playerID: req.body.playerid,
+        confirmed: req.body.confirmed,
+        declined: req.body.declined,
+        extra_player: req.body.extraplayer,
+        unselected: req.body.unselected,
+        selected: req.body.selected,
+        trans_confirmed: req.body.transconfirmed,
+        trans_declined: req.body.transdeclined
+    };
+    console.log(post);
+connection.query('DELETE FROM event_presences WHERE eventID = ? AND playerID = ?', [post.eventID, post.playerID], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    connection.query('INSERT INTO event_presences SET ?', post, function(err,result) {
+/*connection.end();*/
+      if (!err){
+        console.log(result);
+        res.end(JSON.stringify(result));
+      }else{
+        console.log('Error while performing Query.');
+      }
+    });
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+
 app.delete("/eventpresences/:eventid/:playerid",function(req,res){
   var data = {
         eventid: req.params.eventid,
@@ -5046,6 +5080,35 @@ app.post("/tournamenteventpresences/new",function(req,res){
         confirmed: req.body.confirmed,
         declined: req.body.declined,
         extra_player: req.body.extraplayer,
+        unselected: req.body.unselected
+    };
+    console.log(post);
+connection.query('DELETE FROM tournamentevent_presences WHERE tournamenteventID = ? AND playerID = ?', [post.tournamenteventID, post.playerID], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    connection.query('INSERT INTO tournamentevent_presences SET ?', post, function(err,result) {
+/*connection.end();*/
+      if (!err){
+        console.log(result);
+        res.end(JSON.stringify(result));
+      }else{
+        console.log('Error while performing Query.');
+      }
+    });
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.post("/tournamenteventpresences/new2",function(req,res){
+  var post = {
+        tournamenteventID: req.body.tournamenteventid,
+        playerID: req.body.playerid,
+        confirmed: req.body.confirmed,
+        declined: req.body.declined,
+        extra_player: req.body.extraplayer,
+        selected: req.body.selected,
         unselected: req.body.unselected
     };
     console.log(post);
