@@ -3279,7 +3279,7 @@ connection.query('SELECT players.player_ID, players.first_name as "Naam", player
 });
 
 app.get("/players/export/all",function(req,res){
-connection.query('SELECT players.first_name, players.last_name, CONVERT(DATE_FORMAT(players.birth_date,"%d-%m-%Y"), CHAR(50)) as birth_date_string, players.birth_place, players.street, players.street_nr, players.postal_code, players.town, CONVERT(DATE_FORMAT(players.membership_date,"%d-%m-%Y"), CHAR(50)) as membership_date_string, players.membership_nr FROM players WHERE players.player_ID > 2 ORDER BY players.birth_date', function(err, rows, fields) {
+connection.query('SELECT players.first_name, players.last_name, CONVERT(DATE_FORMAT(players.birth_date,"%d-%m-%Y"), CHAR(50)) as birth_date_string, players.birth_place, players.street, players.street_nr, players.postal_code, players.town, CONVERT(DATE_FORMAT(players.membership_date,"%d-%m-%Y"), CHAR(50)) as membership_date_string, players.membership_nr, COALESCE(GROUP_CONCAT(players_emails.email_address), "No Email") as Emails FROM players LEFT JOIN players_emails ON players_emails.playerID = players.player_ID WHERE players.player_ID > 2 GROUP BY players.player_ID ORDER BY players.birth_date', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
