@@ -4639,6 +4639,18 @@ connection.query('SELECT *, concat(prefix, " ", name) as fullName FROM opponents
   });
 });
 
+app.get("/opponents/basenr/:basenr",function(req,res){
+connection.query('SELECT opponent_ID FROM opponents where base_nr = ?', req.params.opponentid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
 app.get("/opponents/count",function(req,res){
 connection.query('SELECT COUNT(*) as number from opponents', function(err, rows, fields) {
 /*connection.end();*/
