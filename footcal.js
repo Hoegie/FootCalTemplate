@@ -4640,7 +4640,7 @@ connection.query('SELECT *, concat(prefix, " ", name) as fullName FROM opponents
 });
 
 app.get("/opponents/basenr/:basenr",function(req,res){
-connection.query('SELECT opponent_ID FROM opponents where base_nr = ?', req.params.opponentid, function(err, rows, fields) {
+connection.query('SELECT opponent_ID FROM opponents where base_nr = ?', req.params.basenr, function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
