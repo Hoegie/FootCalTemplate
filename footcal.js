@@ -4192,6 +4192,32 @@ connection.query(connquery, post, function(err,result) {
   });
 });
 
+app.post("/events/phpnew",function(req,res){
+  var post = {
+        vvid: req.body.vvid,
+        teamID: req.body.teamid,
+        event_type: req.body.eventtype,
+        date: req.body.date,
+        match_type: req.body.matchtype,
+        opponentID: req.body.opponentid,
+        locationID: req.body.locationid,
+        homelocationID: req.body.homelocationid,
+        comments: req.body.comments
+    };
+    console.log(post);
+    var connquery = "INSERT INTO events SET vvid = '" + post.vvid + "' ,date = STR_TO_DATE('" + post.date + "','%d-%m-%Y  %H:%i'), teamID = '" + post.teamID + "', event_type = '" + post.event_type + "', match_type = '" + post.match_type + "', opponentID = '" + post.opponentID + "', locationID = '" + post.locationID + "', homelocationID = '" + post.homelocationID + "', comments = '" + post.comments + "'";
+    console.log(connquery);
+connection.query(connquery, post, function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
 app.put("/events/location/:eventid",function(req,res){
   var put = {
         locationID: req.body.locationid,
