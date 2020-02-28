@@ -2707,7 +2707,7 @@ connection.query('UPDATE userrole_privs SET ? where rights_level = ?', [req.body
 /*TEAMS*/
 
 app.get("/teams/all",function(req,res){
-connection.query('SELECT team_ID, team_name, team_series, team_division, assists, trainingmod_allowed FROM teams ORDER BY team_order ASC', function(err, rows, fields) {
+connection.query('SELECT team_ID, team_name, team_series, team_vvseriesID, team_division, assists, trainingmod_allowed FROM teams ORDER BY team_order ASC', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -2878,6 +2878,23 @@ app.put("/teams/phpedit/:teamid",function(req,res){
         team_series: req.body.teamseries,
         assists: req.body.assists,
         trainingmod_allowed: req.body.trainingmod
+    };
+    console.log(put);
+connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid], function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
+app.put("/teams/phpupdateseries/:teamid",function(req,res){
+  var put = {
+        team_series: req.body.teamseries,
+        team_vvseriesID: req.body.teamvvseriesid
     };
     console.log(put);
 connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid], function(err,result) {
@@ -4216,6 +4233,58 @@ connection.query(connquery, post, function(err,result) {
     console.log('Error while performing Query.');
   }
   });
+});
+
+app.post("/events/phpnewupdateevent",function(req,res){
+  var vvid = req.body.vvid;
+  var post = {
+        vvid: req.body.vvid,
+        teamID: req.body.teamid,
+        event_type: req.body.eventtype,
+        date: req.body.date,
+        match_type: req.body.matchtype,
+        opponentID: req.body.opponentid,
+        locationID: req.body.locationid,
+        homelocationID: req.body.homelocationid,
+        comments: req.body.comments
+    };
+    console.log(post);
+  //check if this vvid already exists
+  connection.query("SELECT event_ID FROM events WHERE vvid = ?",vvid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    
+    if (rows.length > 0) {
+      //event already exists, update the event
+          var connquery = "UPDATE events SET date = STR_TO_DATE('" + post.date + "','%d-%m-%Y  %H:%i'), teamID = '" + post.teamID + "', event_type = '" + post.event_type + "', match_type = '" + post.match_type + "', opponentID = '" + post.opponentID + "', locationID = '" + post.locationID + "', homelocationID = '" + post.homelocationID + "', comments = '" + post.comments + "' WHERE vvid = '" + vvid + "'";
+          console.log(connquery);
+          connection.query(connquery, function(err,result) {
+          /*connection.end();*/
+          if (!err){
+            console.log(result);
+            res.end(JSON.stringify(result));
+          }else{
+            console.log('Error while performing UpdateQuery.');
+          }
+          });
+    } else {
+      //event does not exist yet, insert the event
+          var connquery = "INSERT INTO events SET vvid = '" + post.vvid + "' ,date = STR_TO_DATE('" + post.date + "','%d-%m-%Y  %H:%i'), teamID = '" + post.teamID + "', event_type = '" + post.event_type + "', match_type = '" + post.match_type + "', opponentID = '" + post.opponentID + "', locationID = '" + post.locationID + "', homelocationID = '" + post.homelocationID + "', comments = '" + post.comments + "'";
+          console.log(connquery);
+          connection.query(connquery, post, function(err,result) {
+          /*connection.end();*/
+          if (!err){
+            console.log(result);
+            res.end(JSON.stringify(result));
+          }else{
+            console.log('Error while performing InsertQuery.');
+          }
+          });
+    }
+  }else{
+    console.log('Error while performing GetVVIDQuery.');
+  }
+  });     
 });
 
 app.put("/events/location/:eventid",function(req,res){
