@@ -1,4 +1,4 @@
-//LIVE VERSION 8 dashboard adapted  
+//LIVE VERSION 8 Dashboard adapted 
 var express    = require('express');
 var mysql      = require('mysql');
 var bodyParser = require('body-parser');
@@ -175,6 +175,8 @@ app.post("/footcal/iosanulpush2",function(req,res){
                 
                 notification2.title = locTitle;
                 notification2.body = date + " " + teamName + " " + rows2[0].club_event_name;
+                notification2.aps.category = "anul";
+                notification2.aps.eventID = eventID;
 
                 apnProvider.send(notification2, row.token).then(function(result) { 
                 console.log(result);
@@ -2365,7 +2367,7 @@ connection.query('SELECT COUNT(*) as number from accounts', function(err, rows, 
 });
 
 app.get("/accounts/forcedlogout/:accountid",function(req,res){
-connection.query('SELECT forced_logout from accounts WHERE account_ID = ?', req.params.accountid, function(err, rows, fields) {
+connection.query('SELECT forced_logout, clear_favorites from accounts WHERE account_ID = ?', req.params.accountid, function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
@@ -2459,6 +2461,17 @@ connection.query('UPDATE accounts SET logged_in = 0, forced_logout = 0 WHERE acc
   });
 });
 
+app.put("/accounts/clearfavorites/:id",function(req,res){
+connection.query("UPDATE accounts SET clear_favorites = 0, favorites = 'none' WHERE account_ID = ?",req.params.id, function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
 
 app.put("/accounts/userrole/:id",function(req,res){
   var put = {
@@ -4710,7 +4723,7 @@ connection.query('UPDATE homelocations SET ? WHERE homelocation_ID = ? ', [put, 
 /*OPPONENTS*/
 
 app.get("/opponents/all",function(req,res){
-connection.query('SELECT opponent_ID, concat(prefix, " ", name) as fullName FROM opponents ORDER BY name ASC', function(err, rows, fields) {
+connection.query('SELECT opponent_ID, concat(prefix, " ", name) as fullName, name FROM opponents ORDER BY name ASC', function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
