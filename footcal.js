@@ -3297,7 +3297,7 @@ connection.query('SELECT players.player_ID, players.first_name, players.last_nam
 app.get("/players/php/limit/:offset/:limit",function(req,res){
   console.log(req.params.offset);
   console.log(req.params.limit);
-connection.query('SELECT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Ploeg" ELSE "Niet Actief" END) as Ploeg, COALESCE(CASE WHEN linkedPlayers.accountID > 0 THEN "Ja" END, "Nee") as Gelinkt FROM players LEFT JOIN teams ON players.teamID = teams.team_ID LEFT JOIN linkedPlayers ON players.player_ID = linkedPlayers.playerID WHERE players.player_ID > 2 ORDER BY teams.team_order ASC, players.last_name ASC LIMIT ?, ?',[parseInt(req.params.offset), parseInt(req.params.limit)], function(err, rows, fields) {
+connection.query('SELECT DISTINCT players.player_ID, players.first_name as "Naam", players.last_name as "Familienaam", players.street as "Straat", players.street_nr as "Nr", players.postal_code as "Postcode", players.town as "Woonplaats", COALESCE(teams.team_name, CASE WHEN teamID = 0 THEN "Geen Ploeg" ELSE "Niet Actief" END) as Ploeg, COALESCE(CASE WHEN linkedPlayers.accountID > 0 THEN "Ja" END, "Nee") as Gelinkt FROM players LEFT JOIN teams ON players.teamID = teams.team_ID LEFT JOIN linkedPlayers ON players.player_ID = linkedPlayers.playerID WHERE players.player_ID > 2 ORDER BY teams.team_order ASC, players.last_name ASC LIMIT ?, ?',[parseInt(req.params.offset), parseInt(req.params.limit)], function(err, rows, fields) {
 /*connection.end();*/
   if (!err){
     console.log('The solution is: ', rows);
