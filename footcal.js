@@ -2907,7 +2907,8 @@ connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid
 app.put("/teams/phpupdateseries/:teamid",function(req,res){
   var put = {
         team_series: req.body.teamseries,
-        team_vvseriesID: req.body.teamvvseriesid
+        team_vvseriesID: req.body.teamvvseriesid,
+        team_vvID: req.body.teamvvid
     };
     console.log(put);
 connection.query('UPDATE teams SET ? where team_ID = ?', [put, req.params.teamid], function(err,result) {
