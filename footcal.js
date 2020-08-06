@@ -4038,6 +4038,18 @@ connection.query(connquery, [data.teamid, data.year], function(err, rows, fields
   });
 });
 
+app.get("/events/php/teamcalendar/:teamid",function(req,res){
+connection.query("SELECT CONVERT(DATE_FORMAT(events.date,'%d-%m-%Y'), CHAR(50)) as Datum, CONVERT(DATE_FORMAT(events.date,'%H:%i'), CHAR(50)) as Tijd, club_event_types.club_event_name_nl as Type, (CASE WHEN events.event_type = 8 THEN CONCAT(opponents_location.prefix, ' ', opponents_location.name) ELSE (CASE WHEN events.match_type = 'home' THEN CONCAT(teams.team_name, ' - ', opponents.prefix, ' ', opponents.name) ELSE CONCAT(opponents.prefix, ' ', opponents.name, ' - ', teams.team_name) END) END) as 'Kalender Item' FROM events LEFT JOIN opponents ON events.opponentID = opponents.opponent_ID LEFT JOIN opponents as opponents_location ON events.locationID = opponents_location.opponent_ID LEFT JOIN teams ON events.teamID = teams.team_ID LEFT JOIN club_event_types ON events.event_type = club_event_types.club_event_type_ID WHERE (events.event_type = 8 OR events.event_type = 1 OR events.event_type = 2) and events.teamID = ?", req.params.teamid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
 app.get("/events/confirmedplayers/:eventid",function(req,res){
 connection.query('SELECT confirmed_players, declined_players, extra_players, unselected_players, confirmed_transport, declined_transport FROM events WHERE event_ID = ?', req.params.eventid, function(err, rows, fields) {
 /*connection.end();*/
