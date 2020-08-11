@@ -2354,6 +2354,22 @@ connection.query('SELECT CONVERT(accounts.account_ID,CHAR(50)) AS accountID, acc
   });
 });
 
+app.get("/accounts/appleid/:appleid",function(req,res){
+  var data = {
+        appleid: req.params.appleid
+    };
+    console.log(data.email)
+connection.query('SELECT CONVERT(accounts.account_ID,CHAR(50)) AS accountID, accounts.userroleID, accounts.name, accounts.last_name, accounts.email_address, accounts.password, accounts.pw_recovered, accounts.fblogin, accounts.fbpic_url, accounts.favorites, accounts.clubfavorites, userroles.user_role, userroles.rights_level from accounts JOIN userroles ON accounts.userroleID = userroles.userrole_ID WHERE accounts.appleUserID = ?', data.appleid, function(err, rows, fields) {
+/*connection.end();*/
+  if (!err){
+    console.log('The solution is: ', rows);
+    res.end(JSON.stringify(rows));
+  }else{
+    console.log('Error while performing Query.');
+  }
+  });
+});
+
 app.get("/accounts/count",function(req,res){
 connection.query('SELECT COUNT(*) as number from accounts', function(err, rows, fields) {
 /*connection.end();*/
@@ -2421,6 +2437,26 @@ connection.query('INSERT INTO accounts SET ?', post, function(err,result) {
   });
 });
 
+app.post("/accounts/applenew",function(req,res){
+  var post = {
+        name: req.body.name,
+        last_name: req.body.lastname,
+        email_address: req.body.emailaddress,
+        appleUserID: req.body.appleId,
+        logged_in: 1
+    };
+    console.log(post);
+connection.query('INSERT INTO accounts SET ?', post, function(err,result) {
+/*connection.end();*/
+  if (!err){
+    console.log(result);
+    res.end(JSON.stringify(result));
+  }else{
+    console.log('Error while performing Query.');
+    console.log(err);
+  }
+  });
+});
 
 app.put("/accounts/fbpic/:id",function(req,res){
   var put = {
