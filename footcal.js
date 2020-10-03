@@ -75,7 +75,7 @@ var apnProvider = new apn.Provider({
           keyId: 'AW53VE2WG7', // The Key ID of the p8 file (available at https://developer.apple.com/account/ios/certificate/key)
           teamId: '857J4HYVDU', // The Team ID of your Apple Developer Account (available at https://developer.apple.com/account/#/membership/)
       },
-      production: true // Set to true if sending a notification to a production iOS app
+      production: false // Set to true if sending a notification to a production iOS app
   });  
 //*************************************************************************
 
